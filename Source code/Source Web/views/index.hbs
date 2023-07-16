@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thingspeak Data</title>
+      <!-- Thư viện SweetAlert -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10.16.3/dist/sweetalert2.min.css">
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10.16.3/dist/sweetalert2.all.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    <h1 class="my-5 text-center">Quan trắc môi trường</h1>
+    {{!-- <p>Field 1: {{field1}}</p>
+    <p>Field 2: {{field2}}</p>
+    <p>Field 3: {{field3}}</p>
+    <p>Field 4: {{field4}}</p>
+    <p>Field 5: {{field5}}</p>  --}}
+    <div class="sales-boxes row">
+      <div class="recent-sales box col-6">
+        <h4 class="title">THỐNG KÊ NHIỆT ĐỘ</h4>
+        <div class="sales-details">
+          <div id="chart" style="width:100%"></div>
+        </div>
+        {{!-- <div class="button">
+          <a href="#">See All</a>
+        </div> --}}
+      </div>
+      <div class="recent-sales box col-6">
+        <h4 class="title">THỐNG KÊ ĐỘ ẨM</h4>
+        <div class="sales-details">
+          <div id="chart2" style="width:100%"></div>
+        </div>
+        {{!-- <div class="button">
+          <a href="#">See All</a>
+        </div> --}}
+      </div>
+      <div class="recent-sales box col-6">
+        <h4 class="title">THỐNG KÊ CHẤT LƯỢNG KHÔNG KHÍ</h4>
+        <div class="sales-details">
+          <div id="chart3" style="width:100%"></div>
+        </div>
+        {{!-- <div class="button">
+          <a href="#">See All</a>
+        </div> --}}
+      </div>
+      <div class="recent-sales box col-6">
+        <h4 class="title">THỐNG KÊ LƯỢNG MƯA</h4>
+        <div class="sales-details">
+          <div id="chart4" style="width:100%"></div>
+        </div>
+        {{!-- <div class="button">
+          <a href="#">See All</a>
+        </div> --}}
+      </div>
+      <div class="recent-sales box col-6">
+        <h4 class="title">THỐNG KÊ CƯỜNG ĐỘ ÁNH SÁNG</h4>
+        <div class="sales-details">
+          <div id="chart5" style="width:100%"></div>
+        </div>
+        {{!-- <div class="button">
+          <a href="#">See All</a>
+        </div> --}}
+      </div>
+    </div>
+
+
+    <h1 class="my-5 text-center">Dự đoán thời tiết với khả năng {{dataPredict.ability}}%</h1>
+    <div class="sales-boxes row">
+      <div class="recent-sales box col-12">
+        <h4 class="title">KHẢ NĂNG CÓ THỂ XẢY RA TRONG 24H TỚI</h4>
+        <div class="sales-details">
+          <div id="chart6" style="width:100%"></div>
+        </div>
+      </div>
+    </div>
+
+    <h1 class="my-5 text-center" id="TitleAnalysis">Phân tích các tình huống có thể xảy ra</h1>
+
+
+    <div class="container">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="analysis-card" id="analysis1">
+            <h3 class="text-center">Phân tích khả năng kẹt xe</h3>
+            <div class="text-center my-3">Nồng độ khí và nhiệt độ ổn định hiện tại.</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="analysis-card" id="analysis2">
+            <h3 class="text-center">Phân tích khả năng mưa</h3>
+            <div class="text-center my-3">Cảnh báo độ ẩm tăng lên mạnh.</div>
+          </div>
+          <div class="analysis-card" id="analysis3">
+            <h3 class="text-center">Phân tích khả năng nắng nóng</h3>
+            <div class="text-center my-3">Ngoài trời hiện đang đẹp.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.19.1/moment.min.js" integrity="sha512-Dz4zO7p6MrF+VcOD6PUbA08hK1rv0hDv/wGuxSUjImaUYxRyK2gLC6eQWVqyDN9IM1X/kUA8zkykJS/gEVOd3w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+      <script>
+          var dataNhietDo = {{{json sendData.dataNhietDo}}}
+          var dataDoAm = {{{json sendData.dataDoAm}}}
+          var dataKhongKhi = {{{json sendData.dataKhongKhi}}}
+          var dataLuongMua = {{{json sendData.dataLuongMua}}}
+          var dataAnhSang = {{{json sendData.dataAnhSang}}}
+          var dataDate = {{{json sendData.dataDate}}}
+          dataLuongMua = dataLuongMua.map(analogValue => {
+              var reverseAnalogVal = 1023 - analogValue;
+              var ratio = (1023-350)/7.6
+              var maxMM = 1023/ratio
+              return (reverseAnalogVal/ratio)
+              //.toFixed(2)
+          });
+          //dataKhongK qhi = dataKhongKhi.map(data => {
+          //  return data.toFixed(2)
+          //})
+          var options = {
+            series: [{
+                name: 'Nhiệt độ',
+                type: 'line',
+                data: dataNhietDo
+            }, 
+            ],
+            colors: ['#FF0000'],
+            chart: {
+                height: 350,
+                type: 'line',
+                stacked: false,
+            },
+            stroke: {
+                width: 2,
+                curve: 'smooth'
+            },
+            plotOptions: {
+                bar: {
+                    columnWidth: '100%'
+                }
+            },
+
+            fill: {
+                opacity: [1],
+                gradient: {
+                    inverseColors: false,
+                    shade: 'light',
+                    type: "vertical",
+                    opacityFrom: 0.9,
+                    opacityTo: 0.6,
+                    stops: [0, 100, 100, 100]
+                }
+            },
+            labels: dataDate,
+            markers: {
+                size: 0
+            },
+            xaxis: {
+                          title: {
+              text: 'Thời gian',
+            },
+                type: 'datetime'
+            },
+            yaxis: {
+                title: {
+                    text: 'Nhiệt độ (℃)',
+                },
+                //min: 0
+                labels: {
+                  formatter: function (value) {
+                    return value.toFixed(2); // Áp dụng hàm toFixed(2) để làm tròn dữ liệu trục y đến hai chữ số thập phân
+                  }
+                }
+            },
+            tooltip: {
+                shared: true,
+                intersect: false,
+                y: {
+                  formatter: function (y) {
+                      if (typeof y !== "undefined" || y !=null) {
+                          return y + " ℃";
+                      }
+                      return 0 + " ℃";
+                  }
+                }
+            }
+        };
+          var options2 = {
+            series: [{
+                name: 'Độ ẩm',
+                type: 'line',
+                data: dataDoAm
+            }, 
+            ],
+            colors: ['#00e600'],
+            chart: {
+                height: 350,
+                type: 'line',
+                stacked: false,
+            },
+            stroke: {
+                width: 2,
+                curve: 'smooth'
+            },
+            plotOptions: {
+                bar: {
+                    columnWidth: '100%'
+                }
+            },
+
+            fill: {
+                opacity: [1],
+                gradient: {
+                    inverseColors: false,
+                    shade: 'light',
+                    type: "vertical",
+                    opacityFrom: 0.9,
+                    opacityTo: 0.6,
+                    stops: [0, 100, 100, 100]
+                }
+            },
+            labels: dataDate,
+            markers: {
+                size: 0
+            },
+            xaxis: {
+                          title: {
+              text: 'Thời gian',
+            },
+                type: 'datetime'
+            },
+            yaxis: {
+                title: {
+                    text: 'Độ ẩm (%)',
+                },
+                //min: 0
+                labels: {
+                  formatter: function (value) {
+                    return value.toFixed(2); // Áp dụng hàm toFixed(2) để làm tròn dữ liệu trục y đến hai chữ số thập phân
+                  }
+                }
+            },
+            tooltip: {
+                shared: true,
+                intersect: false,
+                y: {
+                  formatter: function (y) {
+                      if (typeof y !== "undefined" || y !=null) {
+                          return y + " %";
+                      }
+                      return 0 + " %";
+                  }
+                }
+            }
+        };
+          var options3 = {
+            series: [{
+                name: 'Nồng độ',
+                type: 'line',
+                data: dataKhongKhi
+            },
+            ],
+            colors: ['#6f42c1'],
+            chart: {
+                height: 350,
+                type: 'line',
+                stacked: false,
+            },
+            stroke: {
+                width: 2,
+                curve: 'smooth'
+            },
+            plotOptions: {
+                bar: {
+                    columnWidth: '100%'
+                }
+            },
+
+            fill: {
+                opacity: [1],
+                gradient: {
+                    inverseColors: false,
+                    shade: 'light',
+                    type: "vertical",
+                    opacityFrom: 0.9,
+                    opacityTo: 0.6,
+                    stops: [0, 100, 100, 100]
+                }
+            },
+            labels: dataDate,
+            markers: {
+                size: 0
+            },
+            xaxis: {
+                          title: {
+              text: 'Thời gian',
+            },
+                type: 'datetime'
+            },
+            yaxis: {
+                title: {
+                    text: 'Nồng độ khí độc (PPM))',
+                },
+                //min: 0
+                labels: {
+                  formatter: function (value) {
+                    return value.toFixed(2); // Áp dụng hàm toFixed(2) để làm tròn dữ liệu trục y đến hai chữ số thập phân
+                  }
+                }
+            },
+            tooltip: {
+                shared: true,
+                intersect: false,
+                y: {
+                  formatter: function (y) {
+                      if (typeof y !== "undefined" || y !=null) {
+                          return y + " PPM";
+                      }
+                      return 0 + " PPM";
+                  }
+                }
+            }
+        };
+          var options4 = {
+            series: [{
+                name: 'Lượng mưa',
+                type: 'line',
+                data: dataLuongMua
+            }, 
+            ],
+            chart: {
+                height: 350,
+                type: 'line',
+                stacked: false,
+            },
+            stroke: {
+                width: 2,
+                curve: 'smooth'
+            },
+            plotOptions: {
+                bar: {
+                    columnWidth: '100%'
+                }
+            },
+
+            fill: {
+                opacity: [1],
+                gradient: {
+                    inverseColors: false,
+                    shade: 'light',
+                    type: "vertical",
+                    opacityFrom: 0.9,
+                    opacityTo: 0.6,
+                    stops: [0, 100, 100, 100]
+                }
+            },
+            labels: dataDate,
+            markers: {
+                size: 0
+            },
+            xaxis: {
+                          title: {
+              text: 'Thời gian',
+            },
+                type: 'datetime'
+            },
+            yaxis: {
+                title: {
+                    text: 'Lượng mưa (℃)',
+                },
+                //min: 0
+                labels: {
+                  formatter: function (value) {
+                    return value.toFixed(2); // Áp dụng hàm toFixed(2) để làm tròn dữ liệu trục y đến hai chữ số thập phân
+                  }
+                }
+            },
+            tooltip: {
+                shared: true,
+                intersect: false,
+                y: {
+                  formatter: function (y) {
+                      if (typeof y !== "undefined" || y !=null) {
+                          return y + " mm";
+                      }
+                      return 0 + " mm";
+                  }
+                }
+            }
+        };
+          var options5 = {
+            series: [{
+                name: 'Cường độ sáng',
+                type: 'line',
+                data: dataAnhSang
+            }, 
+            ],
+            colors: ['#ff8000'],
+            chart: {
+                height: 350,
+                type: 'line',
+                stacked: false,
+            },
+            stroke: {
+                width: 2,
+                curve: 'smooth'
+            },
+            plotOptions: {
+                bar: {
+                    columnWidth: '100%'
+                }
+            },
+
+            fill: {
+                opacity: [1],
+                gradient: {
+                    inverseColors: false,
+                    shade: 'light',
+                    type: "vertical",
+                    opacityFrom: 0.9,
+                    opacityTo: 0.6,
+                    stops: [0, 100, 100, 100]
+                }
+            },
+            labels: dataDate,
+            markers: {
+                size: 0
+            },
+            xaxis: {
+                          title: {
+              text: 'Thời gian',
+            },
+                type: 'datetime'
+            },
+            yaxis: {
+                title: {
+                    text: 'Cường độ sáng (lux)',
+                },
+                //min: 0
+                labels: {
+                  formatter: function (value) {
+                    return value.toFixed(2); // Áp dụng hàm toFixed(2) để làm tròn dữ liệu trục y đến hai chữ số thập phân
+                  }
+                }
+            },
+            tooltip: {
+                shared: true,
+                intersect: false,
+                y: {
+                  formatter: function (y) {
+                      if (typeof y !== "undefined" || y !=null) {
+                          return y + " lux";
+                      }
+                      return 0 + " lux";
+                  }
+                }
+            }
+        };
+        
+        var chart = new ApexCharts(document.querySelector("#chart"), options);
+        chart.render();
+        var chart2 = new ApexCharts(document.querySelector("#chart2"), options2);
+        chart2.render();
+        var chart3 = new ApexCharts(document.querySelector("#chart3"), options3);
+        chart3.render();
+        var chart4 = new ApexCharts(document.querySelector("#chart4"), options4);
+        chart4.render();
+        var chart5 = new ApexCharts(document.querySelector("#chart5"), options5);
+        chart5.render();
+
+        var dataPredict = {{{json dataPredict}}}
+        var datePredict = []
+        var conditionPredict = []
+        var uniqueConditions = {};
+        var uniqueConditionCount = 0;
+
+        dataPredict.results.forEach((data)=>{
+          conditionPredict.push(data.condition);
+          datePredict.push(Date.parse(new Date(data.time)));
+          
+          if (!uniqueConditions.hasOwnProperty(data.condition)) {
+            uniqueConditions[data.condition] = uniqueConditionCount;
+            uniqueConditionCount++;
+          }
+        })
+
+        var conditionData = conditionPredict.map(function(condition) {
+          return uniqueConditions[condition];
+        });
+
+        var conditionLabels = Object.keys(uniqueConditions).map(function(condition) {
+          return condition;
+        });
+
+        //console.log(dataPredict)
+        //console.log(datePredict)
+        //console.log(conditionPredict)
+        //console.log(conditionData)
+
+        var options6 = {
+          series: [
+            {
+              name: 'Thời tiết',
+              type: 'line',
+              data: conditionData
+            }
+          ],
+          colors: ["#20c997"],
+          markers: {
+              size: 4
+          },
+          chart: {
+            height: 350,
+            type: 'line',
+            stacked: false
+          },
+          stroke: {
+            width: 0,
+            curve: 'stepline'
+          },
+          //fill: {
+          //  type: 'gradient',
+          //  gradient: {
+          //    shade: 'light',
+          //    type: 'vertical',
+          //    gradientToColors: ['#00e600', '#ffff00', '#ff8000', '#ff0000'],
+          //    stops: [0, 0.2597, 5.9061, 7.6]
+          //  }
+          //},
+          xaxis: {
+                        title: {
+              text: 'Thời gian',
+            },
+            type: 'datetime',
+            categories: datePredict
+          },
+          yaxis: {
+            title: {
+              text: 'Thời tiết',
+              //offsetX: 20
+            },
+            labels: {
+              formatter: function (value) {
+                return conditionLabels[value];
+              },
+              align: 'left',
+            },
+            min: 0,
+            max: uniqueConditionCount - 1,
+            tickAmount: uniqueConditionCount-1,
+          },
+          tooltip: {
+            shared: true,
+            intersect: false,
+            y: {
+              formatter: function (value) {
+                return conditionLabels[value];
+              }
+            },
+            custom: function ({ series, seriesIndex, dataPointIndex, w }) {
+              var date = new Date(datePredict[dataPointIndex]);
+              var condition = conditionPredict[dataPointIndex];
+              var formattedDate = date.toLocaleString();
+              
+              return '<div class="apexcharts-tooltip-custom">' +
+                '<span class="date">' + formattedDate + '</span>' +
+                '<span class="condition"> ' + condition + '</span>' +
+                '</div>';
+            }
+          }
+        };
+
+        // Tạo đối tượng chart và render đồ thị
+        var chart6 = new ApexCharts(document.querySelector('#chart6'), options6);
+        chart6.render();
+      </script>
+
+      <script>
+        let analysis1 = $("#analysis1 div")
+        let analysis2 = $("#analysis2 div")
+        let analysis3 = $("#analysis3 div")
+        let TitleAnalysis = $("#TitleAnalysis")
+        let anaTemp = 0;
+        let anaAir = 0;
+        let anaHum = 0;
+        let anaLight = 0;
+
+        // Phân tích tình huống dựa trên dữ liệu
+        const latestTemperature = dataNhietDo[dataNhietDo.length - 1];
+        const latestAirQuality = dataKhongKhi[dataKhongKhi.length - 1];
+        const latestHumidity = dataDoAm[dataDoAm.length - 1];
+        const latestLight = dataAnhSang[dataAnhSang.length - 1];
+        const latestDate =  new Date(dataDate[dataDate. length - 1]);;
+        const optionsDate = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
+        const dateString = latestDate.toLocaleString('vi-VN', optionsDate); // Chuyển đổi đối tượng ngày thành chuỗi ngày tháng năm và giờ phút giây
+
+        TitleAnalysis.text("Phân tích các tình huống có thể xảy ra kể từ thời gian cuối cùng mà cảm biến gửi về - "+dateString);
+
+        // Tìm sự tăng mạnh của nhiệt độ
+        var temperatureChangeThreshold = 6.5; // Ngưỡng tăng mạnh
+        var temperatureChangeWindow = 5; // Số lượng giá trị trước để xem xét tăng mạnh
+
+        if (dataNhietDo.length >= temperatureChangeWindow) {
+          const previousTemperatureData = dataNhietDo.slice(-temperatureChangeWindow, -1);
+          const averagePreviousTemperature = previousTemperatureData.reduce((sum, value) => sum + value, 0) / temperatureChangeWindow;
+
+          const temperatureChange = latestTemperature - averagePreviousTemperature;
+
+          if (temperatureChange > temperatureChangeThreshold) {
+            console.log("Cảnh báo nhiệt độ tăng mạnh bất thường.");
+            anaTemp = 1
+          }
+        }
+
+        // Tìm sự tăng mạnh của chất lượng không khí
+        const airQualityChangeThreshold = 100; // Ngưỡng tăng mạnh
+        const airQualityChangeWindow = 5; // Số lượng giá trị trước để xem xét tăng mạnh
+
+        if (dataKhongKhi.length >= airQualityChangeWindow) {
+          const previousAirQualityData = dataKhongKhi.slice(-airQualityChangeWindow, -1);
+          const averagePreviousAirQuality = previousAirQualityData.reduce((sum, value) => sum + value, 0) / airQualityChangeWindow;
+
+          const airQualityChange = latestAirQuality - averagePreviousAirQuality;
+
+          if (airQualityChange > airQualityChangeThreshold) {
+            console.log("Cảnh báo chất lượng không khí tăng mạnh bất thường.");
+            anaAir = 1
+          }
+        }
+
+        // PHÂN TÍCH KHẢ NĂNG KẸT XE  
+        if (anaAir==1 && anaTemp==1) {
+          analysis1.text("Cảnh báo có khả năng kẹt xe ở các tuyến đường xung quanh.")
+        } else if (anaAir==1) 
+          analysis1.text("Cảnh báo nồng độ khí độc tăng mạnh bất thường.")
+        else if (anaTemp==1)
+          analysis1.text(`Cảnh báo nhiệt độ tăng mạnh bất thường, hạn chế đi đến nhưng nơi 
+                          thay đổi nhiệt độ đột ngột có thể sẽ dẫn đến sốc nhiệt.`)
+        else analysis1.text("Nồng độ khí và nhiệt độ ổn định hiện tại.")
+
+        // Tìm sự tăng mạnh của độ ẩm
+        const humidityChangeThreshold = 15; // Ngưỡng tăng mạnh
+        const humidityChangeWindow = 5; // Số lượng giá trị trước để xem xét tăng mạnh
+
+        if (dataDoAm.length >= humidityChangeWindow) {
+          const previoushumidityData = dataDoAm.slice(-humidityChangeWindow, -1);
+          const averagePrevioushumidity = previoushumidityData.reduce((sum, value) => sum + value, 0) / humidityChangeWindow;
+
+          const humidityChange = latestHumidity - averagePrevioushumidity;
+
+          if (humidityChange > humidityChangeThreshold) {
+            console.log("Cảnh báo độ ẩm tăng mạnh bất thường.");
+            anaHum = 1
+          }
+        }
+        // Tìm sự giảm mạnh của nhiệt độ
+        temperatureChangeThreshold = 7; // Ngưỡng tăng mạnh
+        temperatureChangeWindow = 5; // Số lượng giá trị trước để xem xét tăng mạnh
+
+        if (dataNhietDo.length >= temperatureChangeWindow) {
+          const previousTemperatureData = dataNhietDo.slice(-temperatureChangeWindow, -1);
+          const averagePreviousTemperature = previousTemperatureData.reduce((sum, value) => sum + value, 0) / temperatureChangeWindow;
+
+          const temperatureChange = averagePreviousTemperature - latestTemperature;
+
+          if (temperatureChange > temperatureChangeThreshold) {
+            console.log("Cảnh báo nhiệt độ giảm mạnh bất thường.");
+            anaTemp = -1
+          }
+        }
+
+        // PHÂN TÍCH KHẢ NĂNG MƯA
+        if (anaHum==1 && anaTemp==-1) {
+          analysis2.text("Có khả năng mưa cao hơn dự đoán.")
+        } else if (anaHum==1) 
+          analysis2.text("Cảnh báo độ ẩm tăng lên mạnh.")
+        else if (anaTemp==-1)
+          analysis2.text("Nhiệt độ giảm nhiều hơn so với bình thường.")
+        else analysis2.text("Nhiệt độ và độ ẩm ổn định hiện tại.")
+
+
+        // Tìm sự tăng mạnh của ánh sáng
+        const lightChangeThreshold = 15; // Ngưỡng tăng mạnh
+        const lightChangeWindow = 5; // Số lượng giá trị trước để xem xét tăng mạnh
+
+        if (dataAnhSang.length >= lightChangeWindow) {
+            const previouslightData = dataAnhSang.slice(-lightChangeWindow, -1);
+            const averagePreviouslight = previouslightData.reduce((sum, value) => sum + value, 0) / lightChangeWindow;
+
+            const lightChange = latestLight - averagePreviouslight;
+
+            if (lightChange > lightChangeThreshold && latestLight > 5000) {
+              console.log("Cảnh báo ánh sáng tăng mạnh bất thường.");
+              anaLight = 1
+            }
+          }
+          
+        // PHÂN TÍCH KHẢ NĂNG NẮNG NÓNG
+        if (anaLight==1 && anaTemp==1) {
+          analysis3.text("Cảnh báo có thể trời đang nắng nóng, hãy bôi kem chống nắng hoặc sử dụng ô che nắng.")
+        } else if (anaLight==1)
+          analysis3.text("Cảnh báo trời không có nhiều mây, nên dùng các biện pháp tránh nắng.")
+        else if (anaTemp==1)
+          analysis3.text(`Cảnh báo nhiệt độ tăng cao.`)
+        else analysis3.text("Ngoài trời hiện đang đẹp.")
+
+      </script>
+</body>
+
+</html>
